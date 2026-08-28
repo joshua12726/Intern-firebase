@@ -1,0 +1,1 @@
+window.PAYMENT_API_URL = 'https://intern-firebase-ten.vercel.app';

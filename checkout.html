@@ -337,7 +337,13 @@
 							</label>
 						</div>
 						<div id="checkout-error" class="checkout-error" style="display:none;"></div>
-						<a href="#" class="primary-btn order-submit">Place order</a>
+						<a href="#" class="primary-btn order-submit">Generate GCASH QR CODE</a>
+						<div id="paymongo-qr-panel" class="paymongo-qr-panel" style="display:none;">
+							<h4>Scan to pay with GCash</h4>
+							<div id="paymongo-qr"></div>
+							<p>Scan this QR code with your phone, or use the button below.</p>
+							<a id="paymongo-checkout-link" class="primary-btn" target="_blank" rel="noopener">Open GCash payment</a>
+						</div>
 					</div>
 					<!-- /Order Details -->
 				</div>
@@ -487,8 +493,11 @@
 		<script src="js/jquery.zoom.min.js"></script>
 		<script src="js/products.js"></script>
 		<script src="js/main.js"></script>
+		<script type="module" src="js/firbase.js"></script>
 		<script src="js/auth.js?v=1"></script>
-		<script src="js/app.js?v=8"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+		<script src="js/config.js"></script>
+		<script src="js/app.js?v=10"></script>
 
 	</body>
 </html>
