@@ -212,11 +212,8 @@
 	function productWidgetHTML(p) {
 		return '' +
 			'<div class="product-widget">' +
-				'<div class="product-img">' +
-					'<img src="' + p.img + '" alt="' + escAttr(p.name) + '">' +
-				'</div>' +
-				'<div class="product-body">' +
-					'<p class="product-category">' + p.category + '</p>' +
+				'<div class="product-img"><img src="' + p.img + '" alt="' + escAttr(p.name) + '"></div>' +
+				'<div class="product-body"><p class="product-category">' + p.category + '</p>' +
 					'<h3 class="product-name"><a href="product.html?id=' + p.id + '">' + p.name + '</a></h3>' +
 					'<h4 class="product-price">' + money(p.price) + ' <del class="product-old-price">' + money(p.oldPrice) + '</del></h4>' +
 				'</div>' +
@@ -228,13 +225,9 @@
 		if (!p) return '';
 		return '' +
 			'<div class="product-widget">' +
-				'<div class="product-img">' +
-					'<img src="' + p.img + '" alt="' + escAttr(p.name) + '">' +
-				'</div>' +
-				'<div class="product-body">' +
-					'<h3 class="product-name"><a href="product.html?id=' + p.id + '">' + p.name + '</a></h3>' +
-					'<h4 class="product-price"><span class="qty">' + item.qty + 'x</span>' + money(p.price * item.qty) + '</h4>' +
-				'</div>' +
+				'<div class="product-img"><img src="' + p.img + '" alt="' + escAttr(p.name) + '"></div>' +
+				'<div class="product-body"><h3 class="product-name"><a href="product.html?id=' + p.id + '">' + p.name + '</a></h3>' +
+					'<h4 class="product-price"><span class="qty">' + item.qty + 'x</span>' + money(p.price * item.qty) + '</h4></div>' +
 				'<button class="delete" data-id="' + p.id + '"><i class="fa fa-close"></i></button>' +
 			'</div>';
 	}
@@ -652,44 +645,16 @@
 			});
 		}
 		$('#related-products').html(related.slice(0, 4).map(function (x) {
-			return productCardHTML(x, 'col-md-3 col-xs-6');
+			return productInnerHTML(x);
 		}).join(''));
 
 		function renderReviews() {
-			reviews = getReviews(p.id);
-			var total = reviews.length;
-			var avg = total ? reviews.reduce(function (s, r) { return s + r.rating; }, 0) / total : 0;
-
-			$('#rating-avg-num').text(avg.toFixed(1));
-			$('#rating-avg-stars').html(starsHTML(Math.round(avg)));
-
-			var distHtml = '';
-			for (var star = 5; star >= 1; star--) {
-				var count = reviews.filter(function (r) { return r.rating === star; }).length;
-				var pct = total ? Math.round(count / total * 100) : 0;
-				distHtml +=
-					'<li>' +
-						'<div class="rating-stars">' + starsHTML(star) + '</div>' +
-						'<div class="rating-progress"><div style="width: ' + pct + '%;"></div></div>' +
-						'<span class="sum">' + count + '</span>' +
-					'</li>';
-			}
-			$('#rating-dist').html(distHtml);
-
-			$('#reviews-list').html(reviews.map(function (r) {
-				return '' +
-					'<li>' +
-						'<div class="review-heading">' +
-							'<h5 class="name">' + r.name + '</h5>' +
-							'<p class="date">' + r.date + '</p>' +
-							'<div class="review-rating">' + starsHTML(r.rating) + '</div>' +
-						'</div>' +
-						'<div class="review-body"><p>' + r.text + '</p></div>' +
-					'</li>';
+			var list = getReviews(p.id);
+			$('#product-reviews').html(list.map(function (r) {
+				return '<li><div class="review-heading"><h5 class="name">' + r.name + '</h5><p class="date">' + r.date + '</p><div class="review-rating">' + starsHTML(r.rating) + '</div></div><div class="review-body"><p>' + r.text + '</p></div></li>';
 			}).join(''));
-
-			$('#tab3-label').text('Reviews (' + total + ')');
-			$('#pd-review-link').html(total + ' Review(s) | Add your review');
+			$('#tab3-label').text('Reviews (' + list.length + ')');
+			$('#pd-review-link').html(list.length + ' Review(s) | Add your review');
 		}
 		renderReviews();
 
@@ -753,6 +718,24 @@
 		}
 		renderOrder();
 
+		var paymentResult = getUrlParam('payment');
+		if (paymentResult === 'success' || paymentResult === 'failed') {
+			var returnedOrder = getLastOrder();
+			if (paymentResult === 'success' && returnedOrder) {
+				clearCart();
+				$('#checkout-section .container').html(
+					'<div class="row"><div class="col-md-8 col-md-offset-2 text-center">' +
+						'<div class="section-title"><h3 class="title"><i class="fa fa-check-circle" style="color:#4bb765;"></i> GCash payment submitted</h3></div>' +
+						'<p style="margin:20px 0;">Your payment is being confirmed. Order reference: <strong>' + escAttr(returnedOrder.number) + '</strong></p>' +
+						'<a href="index.html" class="primary-btn cta-btn">Continue Shopping</a> ' +
+						'<a href="checkout.html?track=1" class="primary-btn cta-btn" style="background:#e4e7ed;color:#15161d;">Track My Order</a>' +
+					'</div></div>'
+				);
+			} else {
+				$('#checkout-error').text('GCash payment was not completed. You can try again.').show();
+			}
+		}
+
 		$(document).on('click', '.cart-qty-btn', function () {
 			var id = parseInt($(this).data('id'), 10);
 			var current = parseInt($(this).siblings('.cart-qty-input').val(), 10) || 1;
@@ -787,7 +770,7 @@
 						'</div>' +
 						'<ul class="track-steps">' +
 							'<li class="done"><i class="fa fa-check-circle"></i>Order placed</li>' +
-							'<li class="done"><i class="fa fa-check-circle"></i>Payment confirmed</li>' +
+							'<li class="done"><i class="fa fa-check-circle"></i>Payment submitted</li>' +
 							'<li><i class="fa fa-circle-o"></i>Processing / packing</li>' +
 							'<li><i class="fa fa-circle-o"></i>Shipped</li>' +
 							'<li><i class="fa fa-circle-o"></i>Delivered</li>' +
@@ -808,7 +791,7 @@
 			return;
 		}
 
-		/* Place order */
+		/* Generate the PayMongo GCash QR code */
 		$('.order-submit').on('click', function (e) {
 			e.preventDefault();
 			var cart = getCart();
@@ -858,31 +841,45 @@
 				return;
 			}
 			$errBox.hide();
-
-			var orderNumber = 'EL-' + Math.floor(100000 + Math.random() * 900000);
-			var order = {
-				number: orderNumber,
-				date: formatDate(new Date()),
-				items: cartCount(),
-				total: cartSubtotal()
-			};
-			writeStore(ORDER_KEY, order);
-			clearCart();
-
-			$('#checkout-section .container').html(
-				'<div class="row"><div class="col-md-8 col-md-offset-2 text-center">' +
-					'<div class="section-title"><h3 class="title"><i class="fa fa-check-circle" style="color:#4bb765;"></i> Order Placed Successfully!</h3></div>' +
-					'<div class="order-summary">' +
-						'<div class="order-col"><div><strong>Order Number</strong></div><div>' + order.number + '</div></div>' +
-						'<div class="order-col"><div><strong>Date</strong></div><div>' + order.date + '</div></div>' +
-						'<div class="order-col"><div><strong>Items</strong></div><div>' + order.items + '</div></div>' +
-						'<div class="order-col"><div><strong>TOTAL</strong></div><div><strong>' + money(order.total) + '</strong></div></div>' +
-					'</div>' +
-					'<p style="margin:20px 0;">Thank you for your purchase! A confirmation email is on its way.</p>' +
-					'<a href="index.html" class="primary-btn cta-btn">Continue Shopping</a> ' +
-					'<a href="checkout.html?track=1" class="primary-btn cta-btn" style="background:#e4e7ed;color:#15161d;">Track My Order</a>' +
-				'</div></div>'
-			);
+			if (!$('#payment-4').is(':checked')) {
+				$errBox.text('GCash is the only online payment method currently available.').slideDown();
+				return;
+			}
+			var $submit = $(this).prop('disabled', true).addClass('disabled');
+			var firebaseUser = window.firebaseAuth && window.firebaseAuth.currentUser;
+			if (!firebaseUser) {
+				$errBox.text('Please sign in before paying with GCash.').slideDown();
+				$submit.prop('disabled', false).removeClass('disabled');
+				return;
+			}
+			firebaseUser.getIdToken().then(function (token) {
+				var paymentApiUrl = window.PAYMENT_API_URL || '';
+				if (!paymentApiUrl || paymentApiUrl.indexOf('YOUR-VERCEL-PROJECT') !== -1) {
+					throw new Error('Payment setup is incomplete. Set the Vercel API URL in js/config.js, then publish the site again.');
+				}
+				return fetch(paymentApiUrl + '/api/paymongo/gcash', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+					body: JSON.stringify({ items: cart })
+				});
+			}).then(function (result) {
+				return result.text().then(function (text) {
+					var body;
+					try { body = JSON.parse(text); } catch (parseError) { body = {}; }
+					if (!result.ok) throw new Error(body.error || 'The payment server could not start the GCash payment.');
+					return body;
+				});
+			}).then(function (payment) {
+				writeStore(ORDER_KEY, { number: payment.orderId, date: formatDate(new Date()), items: cartCount(), total: cartSubtotal(), status: 'pending_payment' });
+				$('#paymongo-qr').empty();
+				if (window.QRCode) new window.QRCode(document.getElementById('paymongo-qr'), { text: payment.checkoutUrl, width: 220, height: 220 });
+				$('#paymongo-checkout-link').attr('href', payment.checkoutUrl);
+				$('#paymongo-qr-panel').slideDown();
+				$submit.prop('disabled', false).removeClass('disabled').text('Payment QR ready');
+			}).catch(function (error) {
+				$errBox.text(error.message).slideDown();
+				$submit.prop('disabled', false).removeClass('disabled');
+			});
 		});
 	}
 
